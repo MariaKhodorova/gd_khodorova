@@ -1,27 +1,26 @@
 extends Node2D
 
-
 var acceleration: Vector2 = Vector2(0,0)
 var velocity: Vector2 = Vector2(0,0)
 var max_force: float = 10
 var max_speed: float = 6
 var max_distance: int = 100
-var min_distance: int = 30 # пикселей
+var min_distance: int = 30
 var angular_speed: float = 0.1
 
-@onready var window = get_parent().get_window()
-@onready var size = get_node("EnemyBoid").texture.get_size() ## что то не так
+# Переменная для хранения угла орбиты
+var orbit_angle: float = 0.0
 
-# Called when the node enters the scene tree for the first time.
+@onready var window = get_parent().get_window()
+@onready var size = get_node("EnemyBoid").texture.get_size()
+
 func _ready() -> void:
 	var x = randi_range(0 + size.x, window.size.x - size.x)
 	var y = randi_range(0 + size.y, window.size.y - size.y)
 	position.x = x
 	position.y = y
-	#apply_force(Vector2(100,50))
+	orbit_angle = randf() * TAU 
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame. 
 func _process(delta: float) -> void:
 	velocity += acceleration * delta
 	velocity = velocity.limit_length(max_speed)
@@ -32,23 +31,20 @@ func _process(delta: float) -> void:
 	rotation += angular_speed * delta
 	
 	borders()
-	
-		
+
+# Новая функция кружения вокруг цели
+func orbit(target: Vector2, radius: float, delta: float):
+	orbit_angle += 2.5 * delta 
+	var desired_pos = target + Vector2(cos(orbit_angle), sin(orbit_angle)) * radius
+	seek(desired_pos) 
+
 func apply_force(force: Vector2):
 	acceleration = force	
-	
 
 func seek(target: Vector2):
 	var direction = target - position
 	var desired_velocity = direction.normalized() * max_speed
-	#if direction.length() > max_distance:
-	#	return
-	#if direction.length() <= min_distance:
-	#	velocity = velocity * 0
-	#	return
-	#var m = remap(direction.length(), min_distance, max_distance, 0, 1)
 	var m = 1
-	
 	var steering = (desired_velocity - velocity) * m
 	steering = steering.limit_length(max_force)
 	apply_force(steering)
@@ -137,7 +133,6 @@ func cohesion(group: Node2D):
 		
 		
 func alignment(group: Node2D):
-	# но нужно задать направление, а то они стоят на месте
 	var velocity: Vector2 = Vector2(10,5)
 	var mean_velocity: Vector2 = Vector2.ZERO
 	var count: int = 0 
