@@ -1,0 +1,4 @@
+.godot/
+.import/
+export_preset.cfg
+*.uid
